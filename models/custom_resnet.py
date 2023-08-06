@@ -30,9 +30,9 @@ class ResBlock(nn.Module):
         return out
 
 
-class Net(nn.Module):
+class CustomResNet(nn.Module):
     def __init__(self, num_classes=10):
-        super(Net, self).__init__()
+        super(CustomResNet, self).__init__()
 
         # Prep Layer
         self.preplayer = nn.Sequential(

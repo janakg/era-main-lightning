@@ -19,7 +19,7 @@ from utils import *
 from config import *
 
 # model imported from a module
-from models.resnet import ResNet18
+from models.custom_resnet import CustomResNet
 
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True' 
@@ -138,7 +138,7 @@ def init():
     # test dataloader
     test_loader = torch.utils.data.DataLoader(test_data, **dataloader_args)
 
-    model = ResNet18().to(device)
+    model = CustomResNet().to(device)
     summary(model, input_size=(3, 32, 32))
 
     # Set the hook
@@ -154,7 +154,7 @@ def run(device, train_loader, test_loader, model):
     train_acc = []
     test_acc = []
 
-    model = ResNet18().to(device)
+    model = CustomResNet().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-2)  # you can adjust learning rate as needed
     criterion = nn.CrossEntropyLoss() # reduction='none' // it can be sum also
 
