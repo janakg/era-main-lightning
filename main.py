@@ -1,11 +1,12 @@
+from __future__ import print_function
+
 import torch
 from tqdm import tqdm
-
-from __future__ import print_function
 
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True' 
@@ -13,11 +14,12 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 from torch_lr_finder import LRFinder
 from torchsummary import summary
 
-# UTIL IMPORTS
+# UTIL AND CONFIG IMPORTS
 from utils import *
+from config import *
 
 # model imported from a module
-from models import ResNet18
+from models.resnet import ResNet18
 
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True' 
@@ -83,7 +85,6 @@ def test(model, device, test_loader, criterion):
     
     return test_succeeded, test_loss
 
-
 def get_lr(
     model,
     train_loader,
@@ -106,6 +107,7 @@ def get_lr(
         diverge_th=diverge_th,
     )
     _, max_lr = lr_finder.plot(log_lr=False, suggest_lr=True)
+    print("max_lr", max_lr)
 
     # Reset the model and optimizer to initial state
     lr_finder.reset()
@@ -113,15 +115,10 @@ def get_lr(
     return max_lr
 
 
-def run():
-    print("Run it")
-
-
-def main():
+def init():
     # CUDA?
     use_cuda = torch.cuda.is_available()
     print("CUDA Available?", use_cuda)
-
 
     # For reproducibility. SEED Random functions
     SEED = 1
@@ -131,8 +128,6 @@ def main():
 
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    # dataloader arguments - something you'll fetch these from cmdprmt
-    batch_size=512
     dataloader_args = dict(shuffle=True, batch_size=batch_size, num_workers=4, pin_memory=True) if use_cuda else dict(shuffle=True, batch_size=64)
 
     train_data, test_data = get_train_and_test_data()
@@ -146,31 +141,31 @@ def main():
     model = ResNet18().to(device)
     summary(model, input_size=(3, 32, 32))
 
-    # Use the hook
+    # Set the hook
     # model.layer1.register_forward_hook(print_featuremaps_hook)
 
+    return device, train_loader, test_loader, model
+
+
+def run(device, train_loader, test_loader, model):
     # Data to plot accuracy and loss graphs
     train_losses = []
     test_losses = []
     train_acc = []
     test_acc = []
 
-    test_incorrect_pred = {'images': [], 'ground_truths': [], 'predicted_vals': []}
-
-    num_epochs = 24
-    max_lr_epoch = 5
-
     model = ResNet18().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-2)  # you can adjust learning rate as needed
     criterion = nn.CrossEntropyLoss() # reduction='none' // it can be sum also
 
-    LRMAX = get_lr(
-            model,
-            train_loader,
-            optimizer,
-            criterion,
-            device)
+    # LRMAX = get_lr(
+    #         model,
+    #         train_loader,
+    #         optimizer,
+    #         criterion,
+    #         device)
 
+    LRMAX = 2.54E-04
     print("LRMAX:", LRMAX)
 
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer,
@@ -184,7 +179,6 @@ def main():
                                     )
 
 
-
     for epoch in range(1, num_epochs+1):
         print(f'Epoch {epoch}')
         train_succeeded, train_processed, train_loss, lr_values = train(model, device, train_loader, optimizer, criterion, scheduler)
@@ -195,3 +189,15 @@ def main():
         test_acc.append(100. * test_succeeded / len(test_loader.dataset))
         test_losses.append(test_loss)
 
+    draw_training_loss(train_losses, train_acc, test_losses, test_acc)
+    
+    return train_losses, test_losses, train_acc, test_acc, lr_values
+
+
+def save_model(model, path):
+    torch.save(model.state_dict(), path)
+
+
+def load_model(model, path):
+    model.load_state_dict(torch.load(path))
+    model.eval()
