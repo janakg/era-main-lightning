@@ -50,28 +50,6 @@ class AlbumentationsCIFAR10Wrapper(Dataset):
         return len(self.data)
     
 
-def get_train_and_test_data(mean = [0.4914, 0.4822, 0.4465], std = [0.247, 0.243, 0.261]):
-    train_transforms = A.Compose([
-        A.Normalize(mean, std),
-        A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),  # 2 x 4 = 8 on each side
-        A.RandomCrop(height=32, width=32, always_apply=True),
-        A.CoarseDropout(max_holes=1, max_height=8, max_width=8, min_holes=1, min_height=8, min_width=8, fill_value=mean, mask_fill_value=None),
-        ToTensorV2()
-    ])
-
-    test_transforms = A.Compose([
-        A.Normalize(mean, std),
-        ToTensorV2()
-    ])
-
-    train_data = AlbumentationsCIFAR10Wrapper(root='./data', train=True, 
-                                            download=True, transform=train_transforms)
-
-    test_data = AlbumentationsCIFAR10Wrapper(root='./data', train=False,
-                                        download=True, transform=test_transforms)
-    return train_data, test_data
-
-
 def draw_training_loss(train_losses, train_acc, test_losses, test_acc):
     fig, axs = plt.subplots(2,2,figsize=(15,10))
     axs[0, 0].plot(train_losses)
