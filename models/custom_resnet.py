@@ -42,7 +42,7 @@ class CustomResNet(LightningModule):
         # Set our init args as class attributes
         self.data_dir = data_dir
         self.learning_rate = learning_rate
-        self.accuracy = Accuracy()
+        self.accuracy = Accuracy(task='multiclass', num_classes=num_classes)
 
          # Prep Layer
         self.preplayer = nn.Sequential(

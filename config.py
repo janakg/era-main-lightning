@@ -1,3 +1,7 @@
+import os
+import torch
+
+
 PATH_DATASETS = os.environ.get("PATH_DATASETS", "./data")
 AVAIL_GPUS = min(1, torch.cuda.device_count())
 BATCH_SIZE = 512 if AVAIL_GPUS else 64

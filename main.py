@@ -13,7 +13,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 from torch_lr_finder import LRFinder
 from torchsummary import summary
-from pytorch_lightning import pl
+import pytorch_lightning as pl
 
 
 # UTIL AND CONFIG IMPORTS
@@ -212,7 +212,6 @@ def run_lightning():
     # Initialize the PyTorch Lightning trainer and train the model
     trainer = pl.Trainer(
         gpus = AVAIL_GPUS,
-        max_epochs = 3,
-        progress_bar_refresh_rate=10
+        max_epochs = 3
     )
     trainer.fit(model)
