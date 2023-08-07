@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset
-from torchvision import datasets, transforms
+from torchvision import datasets
 import numpy as np
 
 from pytorch_grad_cam import GradCAM
@@ -13,10 +13,21 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from config import *
 
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+
 class AlbumentationsCIFAR10Wrapper(Dataset):
-    def __init__(self, root='./data', train=True, download=True, transform=None):
+    def __init__(self, root='./data', train=True, download=True):
         self.data = datasets.CIFAR10(root=root, train=train, download=download)
-        self.transform = transform
+        self.transform = A.Compose([
+            A.Normalize(mean, std),
+            A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),  # 2 x 4 = 8 on each side
+            A.RandomCrop(height=32, width=32, always_apply=True),
+            A.HorizontalFlip(p=0.5),
+            A.CoarseDropout(max_holes=1, max_height=8, max_width=8, min_holes=1, min_height=8, min_width=8, fill_value=mean, mask_fill_value=None),
+            ToTensorV2()
+        ])
 
     def __getitem__(self, idx):
         img, label = self.data[idx]
@@ -97,7 +108,6 @@ def imshow_unnormalized(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)), interpolation='nearest')
     plt.show()
 
-
 def draw_misclassified_images(misclassified_images, num_images=25):
     fig = plt.figure(figsize=(10,10))
     for i in range(num_images):
@@ -106,7 +116,6 @@ def draw_misclassified_images(misclassified_images, num_images=25):
         sub.set_title("Pred={}, Act={}".format(str(misclassified_images[i][1].data.cpu().numpy()), str(misclassified_images[i][2].data.cpu().numpy())))
         plt.axis('off')
     plt.tight_layout()
-
 
 def draw_sample_images(data_loader, num = 4):
     # get some random training images
@@ -118,7 +127,6 @@ def draw_sample_images(data_loader, num = 4):
     
     # print labels
     print(' '.join(f'{classes[labels[j]]:5s}' for j in range(num)))
-
 
 def draw_misclassified_images(model, data_loader, device, num = 10):
     processed_count = 0
@@ -228,7 +236,6 @@ def print_featuremaps_hook(self, input, output):
           plt.imshow(feature_map, cmap='gray')
           plt.show()
 
-
 def show_batch_images(plt, dataloader, count=12, row = 3, col = 4):
     images, labels = next(iter(dataloader))
     for i in range(count):
@@ -239,7 +246,6 @@ def show_batch_images(plt, dataloader, count=12, row = 3, col = 4):
         plt.xticks([])
         plt.yticks([])
 
-
 # visualize the first conv layer filters
 # visualize_conv_layer(plt, model_weights[0].cpu(),row = 5, col = 4)
 def visualize_conv_layer(plt, layer_weights, x=8, y=8, row = 5, col = 4):
@@ -249,7 +255,6 @@ def visualize_conv_layer(plt, layer_weights, x=8, y=8, row = 5, col = 4):
         plt.imshow(filter[0, :, :].detach(), cmap='gray')
         plt.axis('off')
     plt.show()
-
 
 def visualize_feature_map(plt, names, layer_weights, x=5, y=4, row = 6, col = 10):
     fig = plt.figure(figsize=(row, col))

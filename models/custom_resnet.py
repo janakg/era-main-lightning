@@ -1,9 +1,14 @@
 import torch
+from pytorch_lightning import LightningModule
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
+import torch.optim as optim
 
-# Drop out is kept to avoid overfitting
-dropout_value_min = 0.03
+from config import *
+from utils import *
+
 
 # Custom Resnet block only. Refer model.py file for the full model
 class ResBlock(nn.Module):
@@ -30,11 +35,16 @@ class ResBlock(nn.Module):
         return out
 
 
-class CustomResNet(nn.Module):
-    def __init__(self, num_classes=10):
-        super(CustomResNet, self).__init__()
+class CustomResNet(LightningModule):
+    def __init__(self, data_dir=PATH_DATASETS, learning_rate=1e-3):
+        super().__init__() 
 
-        # Prep Layer
+        # Set our init args as class attributes
+        self.data_dir = data_dir
+        self.learning_rate = learning_rate
+        self.accuracy = Accuracy()
+
+         # Prep Layer
         self.preplayer = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(64),
@@ -79,7 +89,7 @@ class CustomResNet(nn.Module):
 
         # FC Layer
         self.fc = nn.Linear(512, num_classes)
-                
+
     def forward(self, x):
         out = self.preplayer(x)
         
@@ -99,5 +109,31 @@ class CustomResNet(nn.Module):
         out = F.log_softmax(out, dim=1) # we need to use log(softmax), as the cross entropy needs the log function
         return out
     
+    def training_step(self, batch, batch_idx):
+        data, target = batch
+        logits = self(data)
+        loss = F.nll_loss(logits, target)
+        return loss
 
+    def validation_step(self, batch, batch_idx):
+        data, target = batch
+        logits = self(data)
+        loss = F.nll_loss(logits, target)
+        preds = torch.argmax(logits, dim=1)
+        self.accuracy(preds, target)
+
+        # Calling self.log will surface up scalars for you in TensorBoard
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_acc", self.accuracy, prog_bar=True)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        return self.validation_step(batch, batch_idx)
     
+    def configure_optimizers(self):
+        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+        return optimizer
+
+    def train_dataloader(self):
+        train_data = AlbumentationsCIFAR10Wrapper(root=self.data_dir, train=True, download=True)
+        return DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)

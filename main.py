@@ -13,6 +13,8 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 from torch_lr_finder import LRFinder
 from torchsummary import summary
+from pytorch_lightning import pl
+
 
 # UTIL AND CONFIG IMPORTS
 from utils import *
@@ -201,3 +203,16 @@ def save_model(model, path):
 def load_model(model, path):
     model.load_state_dict(torch.load(path))
     model.eval()
+
+
+def run_lightning():
+    # Initialize the model
+    model = CustomResNet()
+
+    # Initialize the PyTorch Lightning trainer and train the model
+    trainer = pl.Trainer(
+        gpus = AVAIL_GPUS,
+        max_epochs = 3,
+        progress_bar_refresh_rate=10
+    )
+    trainer.fit(model)
