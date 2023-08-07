@@ -211,7 +211,8 @@ def run_lightning():
 
     # Initialize the PyTorch Lightning trainer and train the model
     trainer = pl.Trainer(
-        gpus = AVAIL_GPUS,
+        accelerator='gpu', 
+        devices=AVAIL_GPUS,
         max_epochs = 3
     )
     trainer.fit(model)

@@ -136,4 +136,12 @@ class CustomResNet(LightningModule):
 
     def train_dataloader(self):
         train_data = AlbumentationsCIFAR10Wrapper(root=self.data_dir, train=True, download=True)
-        return DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
+        return DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=os.cpu_count())
+    
+    def val_dataloader(self):
+        val_data = AlbumentationsCIFAR10Wrapper(root=self.data_dir, train=False, download=True)
+        return DataLoader(val_data, batch_size=BATCH_SIZE, num_workers=os.cpu_count())
+    
+    def test_dataloader(self):
+        test_data = AlbumentationsCIFAR10Wrapper(root=self.data_dir, train=False, download=True)
+        return DataLoader(test_data, batch_size=BATCH_SIZE, num_workers=os.cpu_count())

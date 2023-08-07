@@ -20,6 +20,7 @@ from albumentations.pytorch import ToTensorV2
 class AlbumentationsCIFAR10Wrapper(Dataset):
     def __init__(self, root='./data', train=True, download=True):
         self.data = datasets.CIFAR10(root=root, train=train, download=download)
+        self.train = train
         self.transform = A.Compose([
             A.Normalize(mean, std),
             A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),  # 2 x 4 = 8 on each side
@@ -29,13 +30,20 @@ class AlbumentationsCIFAR10Wrapper(Dataset):
             ToTensorV2()
         ])
 
+        self.test_transforms = A.Compose([
+            A.Normalize(mean, std),
+            ToTensorV2()
+        ])
+
     def __getitem__(self, idx):
         img, label = self.data[idx]
         img = np.array(img)  # PIL Image to numpy array
-        if self.transform:
-            augmented = self.transform(image=img)
-            img = augmented['image']
 
+        transform_fn = self.transform
+        if self.train == False:
+            transform_fn = self.test_transforms
+        augmented = transform_fn(image=img)
+        img = augmented['image']
         return img, label
 
     def __len__(self):
