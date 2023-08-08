@@ -94,14 +94,14 @@ def imshow_unnormalized(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)), interpolation='nearest')
     plt.show()
 
-def draw_misclassified_images(misclassified_images, num_images=25):
-    fig = plt.figure(figsize=(10,10))
-    for i in range(num_images):
-        sub = fig.add_subplot(5, 5, i+1)
-        plt.imshow(misclassified_images[i][0].cpu().numpy().squeeze(), cmap='gray_r')
-        sub.set_title("Pred={}, Act={}".format(str(misclassified_images[i][1].data.cpu().numpy()), str(misclassified_images[i][2].data.cpu().numpy())))
-        plt.axis('off')
-    plt.tight_layout()
+# def draw_misclassified_images(misclassified_images, num_images=25):
+#     fig = plt.figure(figsize=(10,10))
+#     for i in range(num_images):
+#         sub = fig.add_subplot(5, 5, i+1)
+#         plt.imshow(misclassified_images[i][0].cpu().numpy().squeeze(), cmap='gray_r')
+#         sub.set_title("Pred={}, Act={}".format(str(misclassified_images[i][1].data.cpu().numpy()), str(misclassified_images[i][2].data.cpu().numpy())))
+#         plt.axis('off')
+#     plt.tight_layout()
 
 def draw_sample_images(data_loader, num = 4):
     # get some random training images
@@ -114,7 +114,7 @@ def draw_sample_images(data_loader, num = 4):
     # print labels
     print(' '.join(f'{classes[labels[j]]:5s}' for j in range(num)))
 
-def draw_misclassified_images(model, data_loader, device, num = 10):
+def draw_misclassified_images_util(model, data_loader, device, num = 10):
     processed_count = 0
     for data in data_loader:
         with torch.no_grad():
@@ -157,7 +157,7 @@ def draw_misclassified_images(model, data_loader, device, num = 10):
         axs[i, 1].axis('off')
     plt.show()
 
-def draw_misclassified_with_gradcam_images(model, data_loader, target_layers, device, num = 10):
+def draw_misclassified_with_gradcam_images_util(model, data_loader, target_layers, device, num = 10):
     processed_count = 0
     for data in data_loader:
         with torch.no_grad():

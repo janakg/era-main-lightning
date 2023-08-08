@@ -39,3 +39,9 @@ def run_lightning_trainer():
     trainer.fit(model)
 
     return model
+
+def draw_misclassified_images(model):
+    draw_misclassified_images_util(model, model.test_dataloader(), model.device)
+
+def draw_misclassified_with_gradcam_images(model):
+    draw_misclassified_with_gradcam_images_util(model, model.test_dataloader(), target_layers=[model.layer3[-1]], device=model.device)
